@@ -1,3 +1,5 @@
+use std::{error::Error, io, process};
+
 // fixed point iteration - value mapped to itself by the function: f(x) = x 
 // where the curve intersects the line y=x? Yes
 // - repeatedly applying function over and over again 
@@ -7,6 +9,9 @@
 // - or slope > 45 degrees
 // attractors vs. repellers
 // repeatedly applying x_{n+1} = rx_n(1-x_n)
+
+pub struct LogisticData { pub r: f64, pub data: Vec<f64> }
+
 
 /// repeatedly applies the quadratic function
 /// x - starting value. 0 < x < 1
@@ -41,7 +46,7 @@ pub fn logistic_map(x: f64, n: i64, r: f64) -> Vec<f64> {
 /// `r_step_size` - amount to increment r by
 /// 
 /// `r_num_steps` - number of times to increase r by
-pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_num_steps: i64) -> Vec<Vec<f64>> {
+pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_num_steps: i64) -> Vec<LogisticData> {
     let mut logistic_map_outputs = Vec::new();
     let mut start = start_r;
 
@@ -49,7 +54,7 @@ pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_
         let output = logistic_map(x, n, start);
         
       
-        logistic_map_outputs.push(output);
+        logistic_map_outputs.push(LogisticData{ r: start, data: output });
         
         start += r_step_size;
     }
@@ -57,5 +62,9 @@ pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_
     logistic_map_outputs
 }
 
+
+pub fn write_logistic_data(data: Vec<Vec<f64>>) {
+    
+}
 
 
