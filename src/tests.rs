@@ -1,7 +1,9 @@
+use crate::integrators::{euler_step, rk4_step};
 #[cfg(test)]
 
+
 use crate::math::Vec2;
-use crate::integrators::{euler_step, rk4_step};
+
 
 #[test]
 fn test_vec2_add() {
@@ -47,9 +49,15 @@ fn test_euler_step() {
     let mut state = [1.0]; // inital x (vertical axis) value
     let t= 0.0; // initial t (horizontal axis) value 
     let dt = 0.1; // t increment
-    let f = |x: f64, s: &[f64]| {s.iter().map(|t| {x-t}).collect()};
+
+    
+    let f = |t: f64, _s: &[f64]| -> Vec<f64> {
+        vec![-t]
+    };
 
     euler_step(&mut state, t, dt, f);
+
+    assert_eq!(1.0,state[0]);
 }
 
 #[test]
@@ -62,10 +70,14 @@ fn test_integrators_rk4() {
     
     // ugly expression, but should step along 
     // x' = -t
-    // -> x = -0.5(t^2)
-    let f = |x: f64, s: &[f64]| {s.iter().map(|t| {x-t}).collect()};
+    // integrating, we get x = -0.5(t^2)
+    // state length is one because we only depend on one thing: initial position along the vertical axis
+    let f = |t: f64, _s: &[f64]| -> Vec<f64> {
+        vec![-t]
+    };
+
 
     rk4_step(&mut state,t,dt,f);
 
-    assert_eq!(0.0,state[0]);
+    assert_eq!(0.995,state[0]);
 }
