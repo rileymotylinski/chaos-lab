@@ -54,11 +54,38 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 /// v′= −kx​
 /// ```
 /// our state vector is now everything on the rhs of the equal signs:
-/// `state= [x,v]`, each of which are tracked by `t`.
+/// `state = [x,v]`, each of which is tracked by `t`. Additionally, we have the rules for our derivatives, meaning our rk4 integrator _can_ solve our system.
 /// 
-/// #### __But why did we choose `x′=v`?
+/// Here is the appropriate rust code:
+/// 
+/// ```rust
+/// let f = |_x: f64, s: &[f64]| -> Vec<f64> {
+///     // if our state vector, s, is [x,v]
+///     vec![s[1],
+///          -k*s[0]
+///     ]
+/// }
+/// ```
+/// remember: this does not give the updated values (that is the job of the rk4_step function), this simply returns the derivative. Note that in this case, 
+/// we do not use x as it is not part of our rules.
+/// 
+/// #### __But why did we choose `x′=v`__?
 /// it was a matter of reducing our higher order differential equation into a single order diff.eq.. Had we made the choice for `x′′=v`, v = kx, 
 /// and we have no way of knowing v and our rk4 integrator can only handle first order differnetial equations. on the other hand a choice for v = x would be redundant.
+/// 
+/// If we were to find the system for a single variable function:
+/// ```latex
+/// y`=-x
+/// ```
+/// and lets pretend, for a moment, that we didn't know how to integrate this, so instead we must write the code to estimate the parent function:
+/// ```rust
+/// let f = |x: f64, _s: &[f64]| -> Vec<f64> {
+///     vec![-x]
+/// }
+/// ```
+/// We choose to include to underscore to indicate we never use our state variable, it's merely a formality for consistencies
+/// the previous example of a mass-spring system is simply an extension of this idea; we are just given the first-order derivative directly instead of having to perform a substitution.
+///
 /// 
 
 
