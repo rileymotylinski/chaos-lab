@@ -14,7 +14,7 @@ fn main() {
 
     let path = "./test.csv";
     // generating data
-    let data = iterative_logistic_map(0.2,5,3.7, 0.001,5);
+    let data = iterative_logistic_map(0.2,20,3.7, 0.001,200);
 
     // writing data
     if let Err(err) = write_logistic_data(data, path) {

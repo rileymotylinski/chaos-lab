@@ -83,7 +83,7 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 ///     vec![-x]
 /// }
 /// ```
-/// We choose to include to underscore to indicate we never use our state variable, it's merely a formality for consistencies
+/// We choose to include to underscore to indicate we never use our state variable, it's merely a formality for consistencies sake
 /// the previous example of a mass-spring system is simply an extension of this idea; we are just given the first-order derivative directly instead of having to perform a substitution.
 ///
 /// 
