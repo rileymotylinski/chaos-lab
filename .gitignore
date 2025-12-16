@@ -1,4 +1,4 @@
 /target
 notes.md
-test.csv
+*.csv
 /venv

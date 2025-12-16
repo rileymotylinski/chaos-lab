@@ -1,4 +1,4 @@
-use std::{error::Error, io};
+use std::error::Error;
 
 // fixed point iteration - value mapped to itself by the function: f(x) = x 
 // where the curve intersects the line y=x? Yes
@@ -39,7 +39,7 @@ pub fn logistic_map(x: f64, n: i64, r: f64) -> Vec<f64> {
 /// 
 /// `x` - initial starting value < 1
 /// 
-/// `n` - number of iterations to run logistic map
+/// `n` - number of iterations to run logistic map. In other words, the number of values to get for each logistic map iteration.
 /// 
 /// `start_r` - starting r value (recall: modifies size of parabola)
 /// 
@@ -74,7 +74,7 @@ pub fn write_logistic_data(data: Vec<LogisticData>, file_path: &str) -> Result<(
     let mut headers = (0..data[0].data.len()).rev().map(|x: usize| -> String {x.to_string()}).collect::<Vec<String>>();
     headers.push(String::from("r"));
     headers.reverse();
-    
+
     wtr.write_record(&headers)?;
 
     for row in data {

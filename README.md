@@ -4,20 +4,21 @@ e.g. Lorenz attractor, double pendulum, logistic map
 
 ## Setup
 
-create a `.csv` in the cwd for logistic map data to write to. Set appropriate `path` varible in `main.rs`
+create a `.csv` in the cwd for logistic map data to write to. Set appropriate `path` variable in `main.rs`.
+Addtionally, create a `lorenz.csv` for `lorenz.rs` to write to
 
 ### Python Plotting
 in your terminal:
-```
+```shell
 python3 -m venv venv
 
-source venv/bin/activate // macos
-venv\Scripts\activate.bat // Windows commandprompt
+source venv/bin/activate # Macos
+venv\Scripts\activate.bat # Windows Command Prompt
 
 pip3 install matplotlib
+```
 
-```
 ## To Start
-```
+```shell
 ./scripts/start.sh
 ```
