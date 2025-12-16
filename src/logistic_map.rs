@@ -1,4 +1,4 @@
-use std::{error::Error, io, process};
+use std::{error::Error, io};
 
 // fixed point iteration - value mapped to itself by the function: f(x) = x 
 // where the curve intersects the line y=x? Yes
@@ -50,7 +50,7 @@ pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_
     let mut logistic_map_outputs = Vec::new();
     let mut start = start_r;
 
-    for i in (0..r_num_steps).into_iter() {
+    for _i in (0..r_num_steps).into_iter() {
         let output = logistic_map(x, n, start);
         
       
@@ -63,8 +63,30 @@ pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_
 }
 
 
-pub fn write_logistic_data(data: Vec<Vec<f64>>) {
-    
-}
+pub fn write_logistic_data(x: f64, n: i64, start_r: f64, r_step_size: f64, r_num_steps: i64, file_path: &str) -> Result<(), Box<dyn Error>> {
 
+    let mut wtr = csv::Writer::from_path(file_path)?;
+    let data = iterative_logistic_map(x, n, start_r, r_step_size, r_num_steps);
+    let headers = (0..r_num_steps + 1).map(|x: i64| -> String {x.to_string()}).collect::<Vec<String>>();
+    
+    
+
+    wtr.write_record(&headers)?;
+
+    for row in data {
+        let mut full_row = Vec::new();
+        let mut temp_row = row.data;
+        full_row.push(row.r);
+        full_row.append(&mut temp_row);
+        
+        let final_row = full_row.iter().map(|x: &f64| -> String {x.to_string()}).collect::<Vec<String>>();
+
+        wtr.write_record(&final_row)?;
+    }
+
+    // A CSV writer maintains an internal buffer, so it's important
+    // to flush the buffer when you're done.
+    wtr.flush()?;
+    Ok(())
+}
 
