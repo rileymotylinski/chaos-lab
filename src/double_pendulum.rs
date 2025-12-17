@@ -35,7 +35,7 @@ pub fn double_pendulum() -> Result<(), Box<dyn Error>> {
     };
 
 
-    let mut state = [0.1,0.1,0.0,0.0]; 
+    let mut state = [0.1,0.5,0.0,0.0]; 
     let mut t= 0.0; // initial t (horizontal axis) value  
     let dt = 0.1; // t increment
 
@@ -46,7 +46,7 @@ pub fn double_pendulum() -> Result<(), Box<dyn Error>> {
     wtr.write_record(&headers)?;
 
     
-    let num_steps = 50;
+    let num_steps = 5000;
     for _i in 0..num_steps {
 
         // [t, theta1, theta2]
@@ -78,11 +78,17 @@ fn omega_1_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, om
 
     let term1 = -1.0*g*(2.0*m1 + m2)*theta1.sin();
     let term2 = m2*g*(theta1 - (2.0*theta2)).sin();
-    let term3 = 2.0*m2*delta.sin()*(omega2.powf(2.0)*l2 + omega1.powf(2.0)*l1*delta.cos());
+    let term3 = 2.0*m2*delta.sin()*(omega2*omega2*l2 + omega1*omega1*l1*delta.cos());
 
     let result = term1 - term2 - term3;
+    let denom = l1 * ((2.0*m1) + m2 - (m2*(2.0*delta).cos()));
+    
+    // protecting against sudden divergence. Whiole not totally accurate, as long as the divergence isn't unreasonable it's  still a good simulation
+    if denom.abs() < 1e-6 {
+        return 0.0; // or damped fallback
+    }
 
-    result / (l1 * ((2.0*m1)+m2-(m2*(2.0*delta).cos())))
+    result / denom
 }
 
 fn omega_2_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, omega1: f64, omega2: f64) -> f64 {
@@ -90,8 +96,17 @@ fn omega_2_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, om
     let delta = theta1 - theta2;
     let sum_masses = m1 + m2;
 
-    let result = 2.0 * delta.sin() * (omega1.powf(2.0)*l1*sum_masses + g*sum_masses*theta1.cos() + omega2.powf(2.0)*l2*m2*delta.cos());
+    let term1 = omega1*omega1*l1*sum_masses;
+    let term2 = g*sum_masses*theta1.cos();
+    let term3 = omega2*omega2*l2*m2*delta.cos();
 
-    result / (l2 * (2.0*m1 + m2 - m2*(2.0*delta).cos()))
+    let result = 2.0 * delta.sin() * (term1 + term2 + term3);
+    let denom = l2 * ((2.0*m1) + m2 - (m2*(2.0*delta).cos()));
+
+    if denom.abs() < 1e-6 {
+        return 0.0; // or damped fallback
+    }
+
+    result / denom
 
 }

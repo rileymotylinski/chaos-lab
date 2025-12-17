@@ -86,7 +86,9 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 /// We choose to include to underscore to indicate we never use our state variable, it's merely a formality for consistencies sake
 /// the previous example of a mass-spring system is simply an extension of this idea; we are just given the first-order derivative directly instead of having to perform a substitution.
 ///
-/// 
+/// ### Limitations
+/// While rk4 is nice because it is easy to implements, it is *not* physically perfect re: divergence in the double pendulum system. This typically happens with more "complex" derivatives wehre there are 
+/// more opportunities for derivate to explode and throw off our entire system.
 
 pub fn rk4_step<F>(state: &mut [f64], t: f64, dt: f64, f: F)
 where F:Fn(f64, &[f64]) -> Vec<f64> {
