@@ -16,6 +16,8 @@ source venv/bin/activate # Macos
 venv\Scripts\activate.bat # Windows Command Prompt
 
 pip3 install matplotlib
+
+python3 plot.py
 ```
 
 ## To Start

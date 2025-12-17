@@ -88,7 +88,6 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 ///
 /// 
 
-
 pub fn rk4_step<F>(state: &mut [f64], t: f64, dt: f64, f: F)
 where F:Fn(f64, &[f64]) -> Vec<f64> {
     // k1​=f(t,x)

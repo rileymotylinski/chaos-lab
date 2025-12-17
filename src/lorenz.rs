@@ -19,7 +19,7 @@ pub fn lorenz() -> Result<(), Box<dyn Error>> {
     };
 
     let mut state = [1.0,1.0,1.0]; // inital x (vertical axis) value
-    let t= 0.0; // initial t (horizontal axis) value  
+    let mut t= 0.0; // initial t (horizontal axis) value  
     let dt = 0.1; // t increment
 
     // create csv writer
@@ -36,7 +36,8 @@ pub fn lorenz() -> Result<(), Box<dyn Error>> {
         wtr.write_record(&temp)?;
         // update state
         crate::integrators::rk4_step(&mut state,t,dt,f);
-
+        // don't really have to update t here, but will for formailities sake
+        t += dt;
     }
 
     
