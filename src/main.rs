@@ -15,7 +15,7 @@ fn main() {
     //println!("Simulation selected: {:?}", simulation);
 
     // logistic map stuff
-    let path = "./test.csv";
+    let path = "./src/csv/test.csv";
     // generating data
     let data = iterative_logistic_map(0.3,10,3.6, 0.0001,2000);
 

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 def logistic_points():
     x_points = []
     y_points = []
-    with open('test.csv', newline='') as csvfile:
+    with open('./src/csv/test.csv', newline='') as csvfile:
 
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
@@ -25,7 +25,7 @@ def lorenz_points():
     x_points = []
     y_points = []
     z_points = []
-    with open('lorenz.csv', newline='') as csvfile:
+    with open('./src/csv/lorenz.csv', newline='') as csvfile:
 
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
@@ -49,7 +49,27 @@ def lorenz_points():
 
     plt.show()
 
-lorenz_points()
+def double_pendulum_points():
+    x_points = []
+    theta_1_points = []
+    theta_2_points = []
+    with open('./src/csv/double_pendulum.csv', newline='') as csvfile:
+
+        spamreader = csv.reader(csvfile, delimiter=',')
+        for row in spamreader:
+            # hack-y solution for now, just skips headers. not really planning to display w/ python long term
+            if spamreader.line_num == 1:
+                continue
+
+            x_points.append(float(row[0]))
+            theta_1_points.append(float(row[1]))
+            theta_2_points.append(float(row[2]))
+    plt.plot(x_points,theta_1_points,"ro")
+    plt.plot(x_points,theta_2_points,"bo")
+    plt.show()
+
+double_pendulum_points()
+
 
   
 

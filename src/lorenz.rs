@@ -6,7 +6,7 @@ pub fn lorenz() -> Result<(), Box<dyn Error>> {
     let sigma = 10.0;
     let ro = 28.0;
     let beta = 8.0/3.0;
-    let output_file = "./lorenz.csv";
+    let output_file = "./src/csv/lorenz.csv";
     
     // implementing lorenz system derivatives
     // if s = [x,y,z]
