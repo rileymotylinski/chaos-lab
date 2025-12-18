@@ -11,6 +11,7 @@ mod rng;
 mod tests;
 mod lorenz;
 mod double_pendulum;
+mod lyapunov;
 
 
 use eframe::egui;
@@ -110,6 +111,8 @@ impl eframe::App for MyEguiApp {
                 }  
             } else { 
                 ui.heading("This is a double pendulum");
+
+                // TODO: add double pendulum interaction
             }
             
 

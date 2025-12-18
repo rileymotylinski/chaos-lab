@@ -2,7 +2,7 @@
 
 
 mod tests {
-    use crate::{integrators::{euler_step, rk4_step}, math::Vec2};
+    use crate::{integrators::{euler_step, rk4_step}, lyapunov, math::Vec2};
 
     
 
@@ -81,6 +81,22 @@ mod tests {
         rk4_step(&mut state,t,dt,f);
 
         assert_eq!(0.995,state[0]);
+    }
+
+    #[test]
+    fn test_lyapunov() {
+        // logistic map r
+        let r = 0.337;
+
+        let num_iterations = 5 * (10 as i32).pow(5);
+        let f = |t: f64, _s : &[f64]| -> Vec<f64> {
+            vec![r - (2.0*r*t)]
+        };
+        
+
+        let result = crate::lyapunov::lyapunov(num_iterations as i64, f);
+        println!("{}", result);
+        assert_eq!(1.0,result);
     }
 
 }

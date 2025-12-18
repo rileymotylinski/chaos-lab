@@ -23,7 +23,7 @@ pub fn logistic_map(x: f64, n: i64, r: f64) -> Vec<f64> {
     let mut xprime = r*x*(1.0-x);
     let mut nums = Vec::new();
 
-    for _ in (0..n).into_iter() {
+    for _ in 0..n {
         
         nums.push(xprime);
         xprime = r*xprime*(1.0-xprime);
