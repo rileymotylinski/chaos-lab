@@ -7,6 +7,12 @@ e.g. Lorenz attractor, double pendulum, logistic map
 create a `.csv` in the cwd for logistic map data to write to. Set appropriate `path` variable in `main.rs`.
 Addtionally, create a `lorenz.csv` for `lorenz.rs` to write to
 
+
+## To Start
+```shell
+./scripts/start.sh
+```
+
 ### Python Plotting
 in your terminal:
 ```shell
@@ -17,10 +23,5 @@ venv\Scripts\activate.bat # Windows Command Prompt
 
 pip3 install matplotlib
 
-python3 plot.py
-```
-
-## To Start
-```shell
-./scripts/start.sh
+python3 /src/scripts/plot.py
 ```

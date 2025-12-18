@@ -1,11 +1,6 @@
 use std::error::Error;
 
-pub fn lorenz() -> Result<(), Box<dyn Error>> {
-
-
-    let sigma = 10.0;
-    let ro = 28.0;
-    let beta = 8.0/3.0;
+pub fn lorenz(sigma: f64, ro: f64, beta: f64) -> Result<(), Box<dyn Error>> {
     let output_file = "./src/csv/lorenz.csv";
     
     // implementing lorenz system derivatives
