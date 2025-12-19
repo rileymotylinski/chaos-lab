@@ -84,20 +84,28 @@ mod tests {
     }
 
     #[test]
-    fn test_lyapunov() {
+    fn test_lyapunov_unstable() {
         
         // logistic map r
-        let r = 0.357;
+        let r = 4.0;
 
-        let num_iterations = 5 * (10 as i32).pow(2);
-        let f = |t: f64, _s : &[f64]| -> Vec<f64> {
-            vec![r - (2.0*r*t)]
+        let num_iterations: i64 = 100000;
+        let f = |t: f64| -> f64 {
+            r*t*(1.0-t)
         };
-        
 
-        let result = crate::lyapunov::lyapunov(num_iterations as i64, f,r);
-        println!("{}", result);
-        assert_eq!(1.0,result);
+        // logistic map is only defined on [0,1]
+        let result = crate::lyapunov::lyapunov(0.9,num_iterations, f);
+        assert!(result - 0.693 < 0.001);
+    }
+
+    #[test]
+    fn test_lyapunov_stable() {
+        let num_iterations: i64 = 100000;
+        let f = |x: f64| 0.5 * x;
+
+        let result = crate::lyapunov::lyapunov(0.9,num_iterations, f);
+        assert!(result < 0.0);
     }
 
 }

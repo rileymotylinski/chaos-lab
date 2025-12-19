@@ -13,7 +13,7 @@ use std::error::Error;
 pub struct LogisticData { pub r: f64, pub data: Vec<f64> }
 
 
-/// repeatedly applies the quadratic function
+/// repeatedly applies the quadratic function. Only defined on [0,1]
 /// x - starting value. 0 < x < 1
 /// 
 /// n - number of iterations

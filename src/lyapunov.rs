@@ -1,4 +1,4 @@
-/// finds the largest lyapunov exponent for a given function
+/// finds the largest lyapunov exponent for a given function via double trajectory method
 /// 
 /// `x0` - inital state vector in this case, x0 is *NOT* the value along the horizontal axis, but rather the inital state "vector" (to generalize) which will evolve across time (n)
 /// 
@@ -19,7 +19,7 @@
 /// 
 /// ### An interesting note for later
 /// 
-fn lyapunov<F>(x0: f64, n: i32, f:F) -> f64 
+pub fn lyapunov<F>(x0: f64, n: i64, f:F) -> f64 
 where F: Fn(f64) -> f64 {
     // initial starting vector state
     let mut x = x0;
@@ -40,6 +40,7 @@ where F: Fn(f64) -> f64 {
         // difference between the two trajectories
         let delta = (x_pert-x).abs();
 
+        // if the differnce is ever zero, we can't take ln of that
         if delta == 0.0 {
             continue;
         }
@@ -57,7 +58,7 @@ where F: Fn(f64) -> f64 {
         x_pert = x + (eps * (x_pert - x) / delta);
      }
 
-    // divide by n because the lyapunov exponnet is the average rate of divergence
+    // divide by n because the lyapunov exponent is the average rate of divergence
     sum / (n as f64)
     
 
