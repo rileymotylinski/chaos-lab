@@ -35,7 +35,7 @@ pub fn logistic_map(x: f64, n: i64, r: f64) -> Vec<f64> {
 
 
 
-/// runs logistic_map over a range of values
+/// runs logistic_map over a range of r values
 /// 
 /// `x` - initial starting value < 1
 /// 

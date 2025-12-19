@@ -85,16 +85,17 @@ mod tests {
 
     #[test]
     fn test_lyapunov() {
+        
         // logistic map r
-        let r = 0.337;
+        let r = 0.357;
 
-        let num_iterations = 5 * (10 as i32).pow(5);
+        let num_iterations = 5 * (10 as i32).pow(2);
         let f = |t: f64, _s : &[f64]| -> Vec<f64> {
             vec![r - (2.0*r*t)]
         };
         
 
-        let result = crate::lyapunov::lyapunov(num_iterations as i64, f);
+        let result = crate::lyapunov::lyapunov(num_iterations as i64, f,r);
         println!("{}", result);
         assert_eq!(1.0,result);
     }
