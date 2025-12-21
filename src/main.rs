@@ -1,8 +1,11 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use crate::logistic_map::iterative_logistic_map;
-use std::process;
+use egui_plot::{Line, Plot, PlotPoints};
+
+
+
+use crate::{lorenz::Lorenz};
 
 mod math;
 mod integrators;
@@ -12,6 +15,8 @@ mod tests;
 mod lorenz;
 mod double_pendulum;
 mod lyapunov;
+mod dynamical_system;
+
 
 
 use eframe::egui;
@@ -60,9 +65,9 @@ struct MyEguiApp {
     pub simulation: Simulation,
 
     // lorenz
-    pub sigma: f64,
-    pub ro: f64,
-    pub beta: f64
+    pub lorenz_system: Lorenz,
+    pub lorenz_points: Vec<[f64; 3]>,
+    pub lorenz_state: [f64; 3]
 }
 
 impl MyEguiApp {
@@ -74,7 +79,12 @@ impl MyEguiApp {
         Self::default();
         
         // state is stored int the struct; egui is stateless
-        Self { sigma: 0.0, ro: 0.0, beta: 0.0, simulation: Simulation::Lorenz }
+        Self {  
+            simulation: Simulation::Lorenz,
+            lorenz_system: Default::default(),
+            lorenz_points: Vec::new(),
+            lorenz_state: [1.0,1.0,1.0]
+        }
     }
 
 
@@ -93,22 +103,24 @@ impl eframe::App for MyEguiApp {
                 }
             );
 
-            if (self.simulation == Simulation::Lorenz) {
+            if self.simulation == Simulation::Lorenz {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    ui.add(egui::Slider::new(&mut self.sigma, 0.0..=100.0));
-                    ui.add(egui::Slider::new(&mut self.ro, 0.0..=100.0));
-                    ui.add(egui::Slider::new(&mut self.beta, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
                 });
 
-                if ui.button("Run Simulation").clicked() {
-                    // lorenz attractor stuff
-                    // writing data
-                    if let Err(err) = crate::lorenz::lorenz(self.sigma, self.ro,self.beta) {
-                        println!("{}", err);
-                        process::exit(1);
-                    }
+                let points: PlotPoints = self.lorenz_points.iter().map(| i | {
+                    println!("{}", i[0]);
+                    [i[0],i[1]]
+                }).collect();
+                let line = Line::new("sin", points);
+                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
 
-                }  
+                // maybe change t, dt to state variables? not really sure.
+                crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.1);
+                self.lorenz_points.push([self.lorenz_state[0], self.lorenz_state[1], self.lorenz_state[2]]);
+                
             } else { 
                 ui.heading("This is a double pendulum");
 
@@ -121,24 +133,4 @@ impl eframe::App for MyEguiApp {
     }
 }
 
-    
-
-// bandaid catchall solution while I migrate to egui
-fn update_points() {
-    //let simulation = std::env::args().nth(1).expect("No Simulation was given");
-
-    //println!("Simulation selected: {:?}", simulation);
-
-    // logistic map stuff
-    let _path = "./src/csv/test.csv";
-    // generating data
-    let _data = iterative_logistic_map(0.3,10,3.6, 0.0001,2000);
-
-    if let Err(err) = crate::double_pendulum::double_pendulum() {
-        println!("{}", err);
-        process::exit(1);
-    }
-
-    
-}
 

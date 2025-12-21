@@ -31,7 +31,7 @@ where F: Fn(f64) -> f64 {
     // inital differnce in the two trajectories
     let mut sum = 0.0;
 
-    for i in 0..n {
+    for _ in 0..n {
         // advancing the system
         x = f(x);
         // advancing the nearby trajectory
