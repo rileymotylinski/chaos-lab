@@ -1,7 +1,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use egui_plot::{Line, Plot, PlotPoints};
+use egui_plot::{Line, Plot, PlotPoints, PlotPoint};
 
 
 
@@ -66,7 +66,7 @@ struct MyEguiApp {
 
     // lorenz
     pub lorenz_system: Lorenz,
-    pub lorenz_points: Vec<[f64; 3]>,
+    pub lorenz_points: Vec<[f64; 2]>,
     pub lorenz_state: [f64; 3]
 }
 
@@ -109,27 +109,27 @@ impl eframe::App for MyEguiApp {
                     ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
                     ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
                 });
-
-                let points: PlotPoints = self.lorenz_points.iter().map(| i | {
-                    println!("{}", i[0]);
+                
+                
+                // maybe change t, dt to state variables? not really sure.
+                crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
+                // discard z value or self.lorenz_state[2]
+                self.lorenz_points.push([self.lorenz_state[0], self.lorenz_state[1]]);
+                
+                let points: PlotPoints = self.lorenz_points.iter().map(|i| {
                     [i[0],i[1]]
                 }).collect();
                 let line = Line::new("sin", points);
-                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
 
-                // maybe change t, dt to state variables? not really sure.
-                crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.1);
-                self.lorenz_points.push([self.lorenz_state[0], self.lorenz_state[1], self.lorenz_state[2]]);
-                
+                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
             } else { 
                 ui.heading("This is a double pendulum");
 
                 // TODO: add double pendulum interaction
             }
-            
-
-             
         });
+        // update every 32ms, regardless of user input
+        ctx.request_repaint_after(std::time::Duration::from_millis(32));
     }
 }
 
