@@ -1,3 +1,5 @@
+use crate::dynamical_system::DynamicalSystem;
+
 
 /// # Euler Step
 /// takes one step along the curve
@@ -9,16 +11,15 @@
 /// `f` - the functions derivative
 /// 
 /// `t` - start along horizontal axis
-pub fn euler_step<F>(state: &mut [f64], t: f64, dt: f64, f: F)
-where F:Fn(f64, &[f64]) -> Vec<f64> {
+pub fn euler_step(sys: &impl DynamicalSystem, state: &mut [f64], t: f64, dt: f64) {
     // find slopes for each point in the array
-    let deriv = f(t, state);
-    println!("{}", deriv[0]);
+    let deriv = sys.rhs(t, state);
+  
     
 
     // setting each value in the array to 
     // the area of the rectangle under the curve
-    for i in 0..state.len() {
+    for i in 0..sys.dimension() {
         state[i] += dt*deriv[i];
     }
 }
@@ -33,7 +34,7 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 /// 
 /// __t__ - starting position along t/x/horizontal axis. While it could be thought of as just another piece of 
 /// information about our function (in other words, another part of the state vector), we choose to seperate 
-/// it into it's own variablebecause it is independent of everything else. It will always change at the 
+/// it into it's own variable because it is independent of everything else. It will always change at the 
 /// same rate without dpeending on other variables.
 /// 
 /// __dt__ - time step taken
@@ -90,13 +91,13 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
 /// While rk4 is nice because it is easy to implements, it is *not* physically perfect re: divergence in the double pendulum system. This typically happens with more "complex" derivatives wehre there are 
 /// more opportunities for derivate to explode and throw off our entire system.
 
-pub fn rk4_step<F>(state: &mut [f64], t: f64, dt: f64, f: F)
-where F:Fn(f64, &[f64]) -> Vec<f64> {
+pub fn rk4_step(sys: &impl DynamicalSystem, state: &mut [f64], t: f64, dt: f64) {
     // k1​=f(t,x)
-    let k1 = f(t,state);
+    // pass the slice (reborrow `state`) rather than taking an extra reference
+    let k1 = sys.rhs(t, state);
 
-    // k2​=f(t+2dt​,x+2dt​k1​)
     // x + 0.5dt​k1
+
     // the reason we pass in the previous k into k2 is because we are using the direction of the previously 
     // determined vector to find the slope at some halfway predicted point to find new direction of the point.
     // We do this 4 times, then take a big, full step in the predicted direction.
@@ -107,7 +108,8 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
     .map(|(s,k)| {s + (k * 0.5 * dt)})
     .collect();
 
-    let k2 = f(t + (dt*0.5), &k2_data);
+    // k2​=f(t+2dt​,x+2dt​k1​)
+    let k2 = sys.rhs(t + (dt*0.5), &k2_data);
 
     // x + 0.5dt​k2
     let k3_data: Vec<f64> = state.iter()
@@ -115,17 +117,17 @@ where F:Fn(f64, &[f64]) -> Vec<f64> {
     .map(|(s,k)| {s + (k * 0.5 * dt)})
     .collect();
 
-    let k3 = f(t + (dt*0.5), &k3_data);
+    let k3 = sys.rhs(t + (dt*0.5), &k3_data);
 
     let k4_data: Vec<f64> = state.iter()
     .zip(&k3)
-    .map(|(s,k)| {s + (k * 0.5 * dt)})
+    .map(|(s,k)| {s + (k * dt)})
     .collect();
 
-    let k4 = f(t + dt, &k4_data);
+    let k4 = sys.rhs(t + dt, &k4_data);
     
 
-    // state + (dt / 6.0)*(k1 + (2*k2) + (2*k3) + k4)
+    // state = (dt / 6.0)*(k1 + (2*k2) + (2*k3) + k4)
     // dividing by 6 because you are averaging six numbers
     for i in 0..state.len() {
         state[i] = state[i] + ((dt / 6.0) * (k1[i] + (2.0 * k2[i]) + (2.0 * k3[i]) + k4[i]));

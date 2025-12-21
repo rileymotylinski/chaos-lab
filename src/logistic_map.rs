@@ -1,5 +1,7 @@
 use std::error::Error;
 
+use crate::dynamical_system::DynamicalSystem;
+
 // fixed point iteration - value mapped to itself by the function: f(x) = x 
 // where the curve intersects the line y=x? Yes
 // - repeatedly applying function over and over again 
@@ -11,6 +13,21 @@ use std::error::Error;
 // repeatedly applying x_{n+1} = rx_n(1-x_n)
 
 pub struct LogisticData { pub r: f64, pub data: Vec<f64> }
+pub struct LogisticMap {
+    pub r: f64
+}
+
+impl DynamicalSystem for LogisticMap {
+    fn dimension(&self) -> usize {
+        1
+    }
+
+    fn rhs(&self, t: f64, _state: &[f64]) -> Vec<f64> {
+        vec![
+            self.r*t*(1.0-t)
+        ]
+    }
+}
 
 
 /// repeatedly applies the quadratic function. Only defined on [0,1]
@@ -61,6 +78,8 @@ pub fn iterative_logistic_map(x: f64, n: i64, start_r: f64, r_step_size: f64, r_
     
     logistic_map_outputs
 }
+
+
 
 /// writes logistic data to an existing csv file at `file_path`
 /// 

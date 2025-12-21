@@ -2,7 +2,7 @@
 
 
 mod tests {
-    use crate::{integrators::{euler_step, rk4_step}, lyapunov, math::Vec2};
+    use crate::{double_pendulum::DoublePendulum, dynamical_system::DynamicalSystem, integrators::{euler_step, rk4_step}, logistic_map::LogisticMap, lyapunov, math::Vec2};
 
     
 
@@ -52,18 +52,17 @@ mod tests {
         let dt = 0.1; // t increment
 
         
-        let f = |t: f64, _s: &[f64]| -> Vec<f64> {
-            vec![-t]
-        };
+        let sys = LogisticMap { r: 0.357 };
 
-        euler_step(&mut state, t, dt, f);
+        euler_step(&sys, &mut state, t, dt);
 
         assert_eq!(1.0,state[0]);
     }
 
     #[test]
     fn test_integrators_rk4() {
-        
+
+
         let mut state = [1.0]; // inital x (vertical axis) value
         let t= 0.0; // initial t (horizontal axis) value  
         let dt = 0.1; // t increment
@@ -73,14 +72,67 @@ mod tests {
         // x' = -t
         // integrating, we get x = -0.5(t^2)
         // state length is one because we only depend on one thing: initial position along the vertical axis
-        let f = |t: f64, _s: &[f64]| -> Vec<f64> {
-            vec![-t]
-        };
+        struct TestSystem;
+
+        impl DynamicalSystem for TestSystem {
+            fn dimension(&self) -> usize {
+                1
+            }
+        
+            fn rhs(&self, t: f64, _state: &[f64]) -> Vec<f64> {
+                vec![-t]
+            }
+        }
+
+        let s = TestSystem;
 
 
-        rk4_step(&mut state,t,dt,f);
+        crate::integrators::rk4_step(&s,&mut state,t,dt);
 
         assert_eq!(0.995,state[0]);
+        
+        // s is theta_1, theta_2, omega_1, omega_2
+        let mut state = [0.0,0.0,0.0,0.0]; // inital x (vertical axis) value
+        let t= 0.0; // initial t (horizontal axis) value  
+        let dt = 0.1; // t increment
+
+        let dp = DoublePendulum { m1: 1.0, m2: 1.0, l1: 1.0, l2: 1.0 };
+
+        crate::integrators::rk4_step(&dp,&mut state,t,dt);
+
+        // should be unmoved
+        assert_eq!(0.0,state[0]);
+
+
+        struct ExpSystem;
+
+        impl DynamicalSystem for ExpSystem {
+            fn dimension(&self) -> usize {
+                1
+            }
+
+            fn rhs(&self, _t: f64, state: &[f64]) -> Vec<f64> {
+                vec![state[0]]
+            }
+        }
+
+        let sys = ExpSystem;
+        let mut state = vec![1.0]; // x(0) = 1
+        let mut t = 0.0;
+        let dt = 0.01;
+        let steps = 100; // integrate to t = 1.0
+
+        for _ in 0..steps {
+            rk4_step(&sys, &mut state, t, dt);
+            t += dt;
+        }
+
+        let expected = std::f64::consts::E; // e^1
+        let error = (state[0] - expected).abs();
+
+        // RK4 should be very accurate
+        assert!(error < 1e-6, "RK4 error too large: {}", error);
+
     }
 
     #[test]

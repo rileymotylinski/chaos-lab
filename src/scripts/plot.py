@@ -68,7 +68,7 @@ def double_pendulum_points():
     plt.plot(x_points,theta_2_points,"bo")
     plt.show()
 
-double_pendulum_points()
+lorenz_points()
 
 
   

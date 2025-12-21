@@ -1,74 +1,45 @@
-use std::error::Error;
+use crate::{dynamical_system::DynamicalSystem};
+pub struct DoublePendulum {
+    pub m1: f64,
+    pub m2: f64,
 
-/// Use euler-lagrange equations to model motion of a double pendulum
-/// steps with rk4
-/// 4 variables in state vector to reduce second order diff. eq. to first order (can be solved by rk4); two of which are trivial. Recall an n order differential equation can be written as a system of first order differential equations
-/// future note : I really want to see this derivation. I understand (mathematically) how we go from the langrangian -> euler-lagrange equation, but how do we isolate omega_1, omega_2?
-pub fn double_pendulum() -> Result<(), Box<dyn Error>> {
+    pub l1: f64,
+    pub l2: f64
+}
 
-    let file_path= "./src/csv/double_pendulum.csv";
-    let m1 = 1.0;
-    let l1 = 1.0;
+impl DynamicalSystem for DoublePendulum {
+    fn dimension(&self) -> usize {
+        4
+    }
 
-    let m2 = 1.0;
-    let l2 = 1.0;
+    fn rhs(&self, _t: f64, state: &[f64]) -> Vec<f64> {
+        // we know theta' = theta_dot = omega, so redefie the differential equation somehow that way
+        // both omegas must be tracked
+        // can just add an arbitrary number of variables to "Track"
 
-    // we know theta' = theta_dot = omega, so redefie the differential equation somehow that way
-    // both omegas must be tracked
-    // can just add an arbitrary number of variables to "Track"
-
-    // if s = [theta_1, theta_2, omega_1, omega_2]
-    let f = |_t: f64, s:&[f64]| -> Vec<f64> {
-        
+        // if s = [theta_1, theta_2, omega_1, omega_2]
+            
         // for clarity while reading code
-        let theta1 = s[0];
-        let theta2 = s[1];
-        let omega1 = s[2];
-        let omega2 = s[3];
+        let theta1 = state[0];
+        let theta2 = state[1];
+        let omega1 = state[2];
+        let omega2 = state[3];
         
         vec![
             omega1,
             omega2,
-            omega_1_prime(m1, m2, l1, l2, theta1, theta2, omega1, omega2),
-            omega_2_prime(m1, m2, l1, l2, theta1, theta2, omega1, omega2)
+            omega_1_prime(self.m1,self.m2, self.l1, self.l2, theta1, theta2, omega1, omega2),
+            omega_2_prime(self.m1, self.m2, self.l1, self.l2, theta1, theta2, omega1, omega2)
         ]
-    };
-
-
-    let mut state = [0.1,0.5,0.0,0.0]; 
-    let mut t= 0.0; // initial t (horizontal axis) value  
-    let dt = 0.1; // t increment
-
-    // create csv writer
-    let mut wtr = csv::Writer::from_path(file_path)?;
-    // write headers
-    let headers = vec!["time","theta1","theta2"];
-    wtr.write_record(&headers)?;
-
-    
-    let num_steps = 5000;
-    for _i in 0..num_steps {
-
-        // [t, theta1, theta2]
-        let temp = vec![
-            t.to_string(),
-            state[0].to_string(),
-            state[1].to_string()
-        ];
-        // write state
-        wtr.write_record(&temp)?;
-        // update state
-        crate::integrators::rk4_step(&mut state,t,dt,f);
-        // while s.o.e doesn't require t, we are writing to a csv file with t, so I need to make sure it's actually changing for future plotting
-        t += dt;
-
     }
-
-    
-
-    wtr.flush()?;
-    Ok(())
 }
+
+impl Default for DoublePendulum {
+    fn default() -> Self {
+        Self { m1: 1.0, m2: 1.0, l1: 1.0, l2: 1.0 }
+    }
+}
+
 
 // just some algebraic nastiness to get the appropriate derivatives for our system
 // re: https://ode-solver.readthedocs.io/en/master/double-pendulum-example.html
@@ -83,9 +54,11 @@ fn omega_1_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, om
     let result = term1 - term2 - term3;
     let denom = l1 * ((2.0*m1) + m2 - (m2*(2.0*delta).cos()));
     
-    // protecting against sudden divergence. Whiole not totally accurate, as long as the divergence isn't unreasonable it's  still a good simulation
+    // protecting against sudden/chaotic divergence. 
+    // While not totally accurate, as long as the divergence
+    // isn't unreasonable it's  still a good simulation
     if denom.abs() < 1e-6 {
-        return 0.0; // or damped fallback
+        return 0.0; 
     }
 
     result / denom
