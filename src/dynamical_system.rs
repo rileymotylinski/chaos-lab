@@ -5,3 +5,4 @@ pub trait DynamicalSystem {
     fn rhs(&self, t: f64, state: &[f64]) -> Vec<f64>; // returns the next state of the system given the rules (ode's) of the system
 }
 
+

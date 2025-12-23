@@ -6,7 +6,7 @@ use egui::*;
 
 
 
-use crate::{lorenz::Lorenz};
+use crate::{double_pendulum::DoublePendulum, lorenz::Lorenz};
 
 mod math;
 mod integrators;
@@ -65,11 +65,17 @@ struct MyEguiApp {
     
     pub simulation: Simulation,
     pub is_playing: bool,
+    pub speed: u64,
 
     // lorenz
     pub lorenz_system: Lorenz,
     pub lorenz_points: Vec<[f64; 2]>,
-    pub lorenz_state: [f64; 3]
+    pub lorenz_state: [f64; 3],
+
+    // double pendulum
+    pub dp_system: DoublePendulum,
+    pub dp_points: Vec<[f64; 2]>,
+    pub dp_state: [f64; 4]
 }
 
 impl Default for MyEguiApp {
@@ -77,10 +83,15 @@ impl Default for MyEguiApp {
         MyEguiApp {
             simulation: Default::default(),
             is_playing: false,
+            speed: 32,
 
             lorenz_system: Default::default(),
             lorenz_points: vec![],
-            lorenz_state: [1.0,1.0,1.0]
+            lorenz_state: [1.0,1.0,1.0],
+
+            dp_system: Default::default(),
+            dp_points: vec![],
+            dp_state: [1.0,1.0,1.0,1.0]
         }
     }
 }
@@ -97,9 +108,15 @@ impl MyEguiApp {
         Self {  
             simulation: Simulation::Lorenz,
             is_playing: false,
+            speed: 32,
+
             lorenz_system: Default::default(),
             lorenz_points: Vec::new(),
-            lorenz_state: [1.0,1.0,1.0]
+            lorenz_state: [1.0,1.0,1.0],
+
+            dp_system: Default::default(),
+            dp_points: Vec::new(),
+            dp_state: [0.1,0.1,0.1,0.1]
         }
     }
 
@@ -110,7 +127,7 @@ impl eframe::App for MyEguiApp {
 
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            
+            ui.add(egui::Slider::new(&mut self.speed, 0..=100));
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                 // play / pause shape button
                 // where to put the widget
@@ -166,9 +183,13 @@ impl eframe::App for MyEguiApp {
                     // rect is shape, response is current state of the widget
                     let (rect, response) = ui.allocate_at_least(size, egui::Sense::click());
                     
+                    // TODO : make this more generic/applicable to all simulations
                     if response.clicked() {
                         self.lorenz_state = MyEguiApp::default().lorenz_state;
-                        self.lorenz_points = vec![];
+                        self.lorenz_points = MyEguiApp::default().lorenz_points;
+
+                        self.dp_state = MyEguiApp::default().dp_state;
+                        self.dp_points = MyEguiApp::default().dp_points;
                     }
 
                     // object for drawing stuff on gui
@@ -187,10 +208,6 @@ impl eframe::App for MyEguiApp {
                     painter.circle_filled(rect.center(), 13.0, color);
                     painter.circle_filled(rect.center(), 8.0, bg);
                     painter.arrow(rect.center() + egui::vec2(8.0, -4.5), egui::vec2(9.0,9.0), egui::Stroke::new(2.0,color));
-                    
-                    
-                    
-
                 
                 });
                 
@@ -202,10 +219,6 @@ impl eframe::App for MyEguiApp {
                 });
                 
             });
-            
-            
-        
-            
             
 
             if self.simulation == Simulation::Lorenz {
@@ -234,13 +247,37 @@ impl eframe::App for MyEguiApp {
                 
                 
             } else { 
-                ui.heading("This is a double pendulum");
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.add(egui::Slider::new(&mut self.dp_system.l1, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.dp_system.l2, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.dp_system.m1, 0.0..=100.0));
+                    ui.add(egui::Slider::new(&mut self.dp_system.m2, 0.0..=100.0));
+                });
+                
+                
+                if self.is_playing {
+                    // maybe change t, dt to state variables? not really sure.
+                    crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
+                    // discard z value or self.lorenz_state[2]
+                    self.dp_points.push([self.dp_state[0], self.dp_state[1]]);
+                    
+                } 
 
-                // TODO: add double pendulum interaction
+                let points: PlotPoints = self.dp_points.iter().map(|i| {
+                        [i[0],i[1]]
+                }).collect();
+
+                let line = Line::new("Double Pendulum", points);
+                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
+            
+                
+                
             }
         });
         // update every 32ms, regardless of user input
-        ctx.request_repaint_after(std::time::Duration::from_millis(32));
+        // subtract 100 to intuitively increase speed.
+        // realistically we are chaning the length between updates, wo increasing the "speed" will actually increase the
+        ctx.request_repaint_after(std::time::Duration::from_millis((100 as u64).abs_diff(self.speed)));
     }
 }
 
