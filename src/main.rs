@@ -6,7 +6,7 @@ use egui::*;
 
 
 
-use crate::{double_pendulum::DoublePendulum, lorenz::Lorenz};
+use crate::{double_pendulum::DoublePendulum, logistic_map::LogisticMap, lorenz::Lorenz};
 
 mod math;
 mod integrators;
@@ -27,7 +27,7 @@ fn main() {
     eframe::run_native("My egui App", native_options, Box::new(|cc| Ok(Box::new(MyEguiApp::new(cc)))));
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone,Copy)]
 enum Simulation {
     Lorenz,
     Dp,
@@ -61,21 +61,27 @@ impl ToString for Simulation {
 }
 
 
+
+
 struct MyEguiApp {
     
     pub simulation: Simulation,
     pub is_playing: bool,
     pub speed: u64,
 
+    pub points: Vec<[f64; 2]>,
+    // TODO: refactor, definitely a way to compress the points into a single vector
+
     // lorenz
     pub lorenz_system: Lorenz,
-    pub lorenz_points: Vec<[f64; 2]>,
+    
     pub lorenz_state: [f64; 3],
 
     // double pendulum
     pub dp_system: DoublePendulum,
-    pub dp_points: Vec<[f64; 2]>,
-    pub dp_state: [f64; 4]
+    pub dp_state: [f64; 4],
+
+    
 }
 
 impl Default for MyEguiApp {
@@ -85,12 +91,12 @@ impl Default for MyEguiApp {
             is_playing: false,
             speed: 32,
 
+            points: vec![],
+
             lorenz_system: Default::default(),
-            lorenz_points: vec![],
             lorenz_state: [1.0,1.0,1.0],
 
             dp_system: Default::default(),
-            dp_points: vec![],
             dp_state: [1.0,1.0,1.0,1.0]
         }
     }
@@ -110,12 +116,12 @@ impl MyEguiApp {
             is_playing: false,
             speed: 32,
 
+            points: Vec::new(),
+
             lorenz_system: Default::default(),
-            lorenz_points: Vec::new(),
             lorenz_state: [1.0,1.0,1.0],
 
             dp_system: Default::default(),
-            dp_points: Vec::new(),
             dp_state: [0.1,0.1,0.1,0.1]
         }
     }
@@ -185,11 +191,12 @@ impl eframe::App for MyEguiApp {
                     
                     // TODO : make this more generic/applicable to all simulations
                     if response.clicked() {
+                        self.points = MyEguiApp::default().points;
                         self.lorenz_state = MyEguiApp::default().lorenz_state;
-                        self.lorenz_points = MyEguiApp::default().lorenz_points;
+                        
 
                         self.dp_state = MyEguiApp::default().dp_state;
-                        self.dp_points = MyEguiApp::default().dp_points;
+                       
                     }
 
                     // object for drawing stuff on gui
@@ -210,13 +217,25 @@ impl eframe::App for MyEguiApp {
                     painter.arrow(rect.center() + egui::vec2(8.0, -4.5), egui::vec2(9.0,9.0), egui::Stroke::new(2.0,color));
                 
                 });
-                
+
+                // default state
+                let mut before = self.simulation;
                 egui::ComboBox::from_label("Select one!")
                 .selected_text(self.simulation.to_string())
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.simulation, Simulation::Lorenz, Simulation::Lorenz.to_string());
                     ui.selectable_value(&mut self.simulation, Simulation::Dp, Simulation::Dp.to_string());
                 });
+                if self.simulation != before {
+                    self.points = MyEguiApp::default().points;
+                    self.lorenz_state = MyEguiApp::default().lorenz_state;
+                        
+
+                    self.dp_state = MyEguiApp::default().dp_state;
+                    // stop simulation when switching
+                    self.is_playing = false;
+                    before = self.simulation;
+                }
                 
             });
             
@@ -233,15 +252,15 @@ impl eframe::App for MyEguiApp {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
-                    self.lorenz_points.push([self.lorenz_state[0], self.lorenz_state[1]]);
+                    self.points.push([self.lorenz_state[0], self.lorenz_state[1]]);
                     
                 } 
 
-                let points: PlotPoints = self.lorenz_points.iter().map(|i| {
+                let cur_points: PlotPoints = self.points.iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
 
-                let line = Line::new("sin", points);
+                let line = Line::new("sin", cur_points);
                 Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
             
                 
@@ -259,15 +278,15 @@ impl eframe::App for MyEguiApp {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
-                    self.dp_points.push([self.dp_state[0], self.dp_state[1]]);
+                    self.points.push([self.dp_state[0], self.dp_state[1]]);
                     
                 } 
 
-                let points: PlotPoints = self.dp_points.iter().map(|i| {
+                let cur_points: PlotPoints = self.points.iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
 
-                let line = Line::new("Double Pendulum", points);
+                let line = Line::new("Double Pendulum", cur_points);
                 Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
             
                 
