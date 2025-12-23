@@ -31,6 +31,7 @@ fn main() {
 enum Simulation {
     Lorenz,
     Dp,
+    Lmap
 }
 
 impl std::default::Default for Simulation {
@@ -55,7 +56,8 @@ impl ToString for Simulation {
     fn to_string(&self) -> String {
         match self {
             Simulation::Lorenz => String::from("lorenz"),
-            Simulation::Dp => String::from("double pendulum")
+            Simulation::Dp => String::from("double pendulum"),
+            Simulation::Lmap => String::from("logistic map")
         }
     }
 }
@@ -74,12 +76,14 @@ struct MyEguiApp {
 
     // lorenz
     pub lorenz_system: Lorenz,
-    
     pub lorenz_state: [f64; 3],
 
     // double pendulum
     pub dp_system: DoublePendulum,
     pub dp_state: [f64; 4],
+
+    pub lmap_system: LogisticMap,
+    pub lmap_state: [f64; 1]
 
     
 }
@@ -97,7 +101,10 @@ impl Default for MyEguiApp {
             lorenz_state: [1.0,1.0,1.0],
 
             dp_system: Default::default(),
-            dp_state: [1.0,1.0,1.0,1.0]
+            dp_state: [1.0,1.0,1.0,1.0],
+
+            lmap_system: Default::default(),
+            lmap_state: [0.7]
         }
     }
 }
@@ -122,7 +129,10 @@ impl MyEguiApp {
             lorenz_state: [1.0,1.0,1.0],
 
             dp_system: Default::default(),
-            dp_state: [0.1,0.1,0.1,0.1]
+            dp_state: [0.1,0.1,0.1,0.1],
+
+            lmap_system: Default::default(),
+            lmap_state: [0.7]
         }
     }
 
@@ -214,7 +224,6 @@ impl eframe::App for MyEguiApp {
                     painter.rect_filled(rect, 4.0, bg);
                     painter.circle_filled(rect.center(), 13.0, color);
                     painter.circle_filled(rect.center(), 8.0, bg);
-                    painter.arrow(rect.center() + egui::vec2(8.0, -4.5), egui::vec2(9.0,9.0), egui::Stroke::new(2.0,color));
                 
                 });
 
@@ -225,6 +234,7 @@ impl eframe::App for MyEguiApp {
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut self.simulation, Simulation::Lorenz, Simulation::Lorenz.to_string());
                     ui.selectable_value(&mut self.simulation, Simulation::Dp, Simulation::Dp.to_string());
+                    ui.selectable_value(&mut self.simulation, Simulation::Lmap, Simulation::Lmap.to_string());
                 });
                 if self.simulation != before {
                     self.points = MyEguiApp::default().points;
@@ -234,6 +244,7 @@ impl eframe::App for MyEguiApp {
                     self.dp_state = MyEguiApp::default().dp_state;
                     // stop simulation when switching
                     self.is_playing = false;
+                    // updating for comparison next frame
                     before = self.simulation;
                 }
                 
@@ -265,7 +276,7 @@ impl eframe::App for MyEguiApp {
             
                 
                 
-            } else { 
+            } else if self.simulation == Simulation::Dp { 
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.add(egui::Slider::new(&mut self.dp_system.l1, 0.0..=100.0));
                     ui.add(egui::Slider::new(&mut self.dp_system.l2, 0.0..=100.0));
@@ -291,6 +302,8 @@ impl eframe::App for MyEguiApp {
             
                 
                 
+            } else {
+                ui.heading("This is a logistic map!");
             }
         });
         // update every 32ms, regardless of user input

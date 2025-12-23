@@ -29,6 +29,12 @@ impl DynamicalSystem for LogisticMap {
     }
 }
 
+impl Default for LogisticMap {
+    fn default() -> Self {
+        Self { r: 3.57 }
+    }
+}
+
 
 /// repeatedly applies the quadratic function. Only defined on [0,1]
 /// x - starting value. 0 < x < 1
