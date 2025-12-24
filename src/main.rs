@@ -303,7 +303,28 @@ impl eframe::App for MyEguiApp {
                 
                 
             } else {
-                ui.heading("This is a logistic map!");
+                if ui.add(egui::Slider::new(&mut self.lmap_system.r,0.3..=0.4)).changed() {
+                    self.lmap_state = MyEguiApp::default().lmap_state;
+                };
+                
+                if self.is_playing {
+                    // maybe change t, dt to state variables? not really sure.
+                    crate::integrators::rk4_step(&self.lmap_system, &mut self.lmap_state, 0.0, 0.01);
+                    // discard z value or self.lorenz_state[2]
+                    self.points.push([self.lmap_system.r, self.lmap_state[0]]);
+                    
+                    
+                } 
+
+                let cur_points: PlotPoints = self.points.iter().map(|i| {
+                        [i[0],i[1]]
+                }).collect();
+                let pts = Points::new("pts", cur_points).radius(0.9).color(egui::Color32::LIGHT_BLUE);
+                Plot::new("my_plot")
+                .view_aspect(2.0)
+                .show(ui, |plot_ui| {
+                    plot_ui.points(pts);
+                });
             }
         });
         // update every 32ms, regardless of user input
