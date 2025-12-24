@@ -1,5 +1,6 @@
 use crate::dynamical_system::DynamicalSystem;
 
+// parameters for Lorenz system
 pub struct Lorenz {
     pub sigma: f64,
     pub ro: f64,
@@ -11,6 +12,7 @@ impl DynamicalSystem for Lorenz {
         3
     }
 
+    // lorenz derivatives
     fn rhs(&self, _t: f64, state: &[f64]) -> Vec<f64> {
         vec![
             self.sigma*(state[1]-state[0]),

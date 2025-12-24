@@ -1,7 +1,7 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-use egui_plot::{Line, Plot, PlotPoints};
+use egui_plot::{Line, Plot, PlotPoints, Points};
 use egui::*;
 
 
@@ -47,6 +47,7 @@ impl PartialEq for Simulation {
         match (self,other) {
             (Simulation::Lorenz, Simulation::Lorenz) => true,
             (Simulation::Dp, Simulation::Dp) => true,
+            (Simulation::Lmap, Simulation::Lmap) => true,
             _ => false
         }
     }
@@ -118,22 +119,7 @@ impl MyEguiApp {
         Self::default();
         
         // state is stored int the struct; egui is stateless
-        Self {  
-            simulation: Simulation::Lorenz,
-            is_playing: false,
-            speed: 32,
-
-            points: Vec::new(),
-
-            lorenz_system: Default::default(),
-            lorenz_state: [1.0,1.0,1.0],
-
-            dp_system: Default::default(),
-            dp_state: [0.1,0.1,0.1,0.1],
-
-            lmap_system: Default::default(),
-            lmap_state: [0.7]
-        }
+        MyEguiApp::default()
     }
 
 
@@ -229,6 +215,7 @@ impl eframe::App for MyEguiApp {
 
                 // default state
                 let mut before = self.simulation;
+                // dropdown menu
                 egui::ComboBox::from_label("Select one!")
                 .selected_text(self.simulation.to_string())
                 .show_ui(ui, |ui| {
@@ -236,29 +223,28 @@ impl eframe::App for MyEguiApp {
                     ui.selectable_value(&mut self.simulation, Simulation::Dp, Simulation::Dp.to_string());
                     ui.selectable_value(&mut self.simulation, Simulation::Lmap, Simulation::Lmap.to_string());
                 });
+                // on change
                 if self.simulation != before {
+                    // reset graph(s)
                     self.points = MyEguiApp::default().points;
                     self.lorenz_state = MyEguiApp::default().lorenz_state;
-                        
-
                     self.dp_state = MyEguiApp::default().dp_state;
                     // stop simulation when switching
                     self.is_playing = false;
-                    // updating for comparison next frame
-                    before = self.simulation;
                 }
                 
             });
             
 
             if self.simulation == Simulation::Lorenz {
+                // sliders for ro, sigma, beta
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
                     ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
                     ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
                 });
                 
-                
+                // pushing points
                 if self.is_playing {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
@@ -267,6 +253,7 @@ impl eframe::App for MyEguiApp {
                     
                 } 
 
+                // plotting
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
@@ -277,6 +264,7 @@ impl eframe::App for MyEguiApp {
                 
                 
             } else if self.simulation == Simulation::Dp { 
+                // sliders for length1, length2, mass1, mass2
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.add(egui::Slider::new(&mut self.dp_system.l1, 0.0..=100.0));
                     ui.add(egui::Slider::new(&mut self.dp_system.l2, 0.0..=100.0));
@@ -284,7 +272,7 @@ impl eframe::App for MyEguiApp {
                     ui.add(egui::Slider::new(&mut self.dp_system.m2, 0.0..=100.0));
                 });
                 
-                
+                // pushing points
                 if self.is_playing {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
@@ -293,6 +281,7 @@ impl eframe::App for MyEguiApp {
                     
                 } 
 
+                // plotting points
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
@@ -303,23 +292,38 @@ impl eframe::App for MyEguiApp {
                 
                 
             } else {
-                if ui.add(egui::Slider::new(&mut self.lmap_system.r,0.3..=0.4)).changed() {
-                    self.lmap_state = MyEguiApp::default().lmap_state;
-                };
+                //if ui.add(egui::Slider::new(&mut self.lmap_system.r,0.3..=0.4)).changed() {
+                    //self.lmap_state = MyEguiApp::default().lmap_state;
+                //};
                 
+                // running simulation
                 if self.is_playing {
-                    // maybe change t, dt to state variables? not really sure.
-                    crate::integrators::rk4_step(&self.lmap_system, &mut self.lmap_state, 0.0, 0.01);
-                    // discard z value or self.lorenz_state[2]
-                    self.points.push([self.lmap_system.r, self.lmap_state[0]]);
+
+                    for s in 2500..4000 {
+                        let r = s as f64 / 100.0;
+
+                        for _ in 0..50 {
+                            // maybe change t, dt to state variables? not really sure.
+                            crate::integrators::rk4_step(&LogisticMap {r: r}, &mut self.lmap_state, 0.0, 0.01);
+                            // discard z value or self.lorenz_state[2]
+                            self.points.push([r, self.lmap_state[0]]);
+                        }
+
+                        self.lmap_state = MyEguiApp::default().lmap_state;
+                    }
                     
+                   
                     
+                    self.is_playing = !self.is_playing;
                 } 
 
+                // plotting points
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
+
                 let pts = Points::new("pts", cur_points).radius(0.9).color(egui::Color32::LIGHT_BLUE);
+                
                 Plot::new("my_plot")
                 .view_aspect(2.0)
                 .show(ui, |plot_ui| {

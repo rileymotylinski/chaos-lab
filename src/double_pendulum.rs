@@ -64,6 +64,7 @@ fn omega_1_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, om
     result / denom
 }
 
+// more algebraic nastiness. re: above
 fn omega_2_prime(m1: f64, m2:f64, l1: f64, l2: f64, theta1: f64, theta2: f64, omega1: f64, omega2: f64) -> f64 {
     let g = 9.81;
     let delta = theta1 - theta2;
