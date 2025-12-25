@@ -94,7 +94,7 @@ impl Default for MyEguiApp {
         MyEguiApp {
             simulation: Default::default(),
             is_playing: false,
-            speed: 32,
+            speed:50,
 
             points: vec![vec![]],
 
