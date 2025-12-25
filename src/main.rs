@@ -259,6 +259,7 @@ impl eframe::App for MyEguiApp {
                         ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
                         ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
                         ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
+                        ui.heading("initial state");
                     });
                 }
 
@@ -267,8 +268,12 @@ impl eframe::App for MyEguiApp {
                         [i[0],i[1]]
                 }).collect();
 
-                let line = Line::new("sin", cur_points);
-                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
+                let line = Line::new("Lorenz Attractor", cur_points);
+                Plot::new("Lorenz Attractor")
+                .view_aspect(2.0)
+                .x_axis_label("x")
+                .y_axis_label("y")
+                .show(ui, |plot_ui| plot_ui.line(line));
             
                 
                 
@@ -287,7 +292,7 @@ impl eframe::App for MyEguiApp {
                     crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
                     self.points.push([self.dp_state[0], self.dp_state[1]]);
-                    
+                // manage inital state    
                 } else if self.points.len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
@@ -296,6 +301,7 @@ impl eframe::App for MyEguiApp {
                         ui.add(egui::Slider::new(&mut self.dp_state[1], 0.0..=100.0));
                         ui.add(egui::Slider::new(&mut self.dp_state[2], 0.0..=100.0));
                         ui.add(egui::Slider::new(&mut self.dp_state[3], 0.0..=100.0));
+                        ui.heading("initial state");
                     });
                 }
 
@@ -305,7 +311,11 @@ impl eframe::App for MyEguiApp {
                 }).collect();
 
                 let line = Line::new("Double Pendulum", cur_points);
-                Plot::new("my_plot").view_aspect(2.0).show(ui, |plot_ui| plot_ui.line(line));
+                Plot::new("Double Pendulum")
+                .view_aspect(2.0)
+                .x_axis_label("Theta 1")
+                .y_axis_label("Theta 2")
+                .show(ui, |plot_ui| plot_ui.line(line));
             
                 
                 
@@ -344,6 +354,8 @@ impl eframe::App for MyEguiApp {
                 
                 Plot::new("my_plot")
                 .view_aspect(2.0)
+                .x_axis_label("r")
+                .y_axis_label("x_n")
                 .show(ui, |plot_ui| {
                     plot_ui.points(pts);
                 });
