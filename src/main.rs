@@ -251,7 +251,16 @@ impl eframe::App for MyEguiApp {
                     // discard z value or self.lorenz_state[2]
                     self.points.push([self.lorenz_state[0], self.lorenz_state[1]]);
                     
-                } 
+                // only allow modifcation of the inital state
+                } else if self.points.len() == 0 { 
+                    // sliders for inital state
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                        
+                        ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
+                    });
+                }
 
                 // plotting
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
@@ -279,7 +288,16 @@ impl eframe::App for MyEguiApp {
                     // discard z value or self.lorenz_state[2]
                     self.points.push([self.dp_state[0], self.dp_state[1]]);
                     
-                } 
+                } else if self.points.len() == 0 { 
+                    // sliders for inital state
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                        
+                        ui.add(egui::Slider::new(&mut self.dp_state[0], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_state[1], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_state[2], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_state[3], 0.0..=100.0));
+                    });
+                }
 
                 // plotting points
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
@@ -315,7 +333,7 @@ impl eframe::App for MyEguiApp {
                    
                     
                     self.is_playing = !self.is_playing;
-                } 
+                }
 
                 // plotting points
                 let cur_points: PlotPoints = self.points.iter().map(|i| {
