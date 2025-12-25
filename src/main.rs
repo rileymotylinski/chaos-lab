@@ -72,7 +72,7 @@ struct MyEguiApp {
     pub is_playing: bool,
     pub speed: u64,
 
-    pub points: Vec<[f64; 2]>,
+    pub points: Vec<Vec<[f64; 2]>>,
     // TODO: refactor, definitely a way to compress the points into a single vector
 
     // lorenz
@@ -96,7 +96,7 @@ impl Default for MyEguiApp {
             is_playing: false,
             speed: 32,
 
-            points: vec![],
+            points: vec![vec![]],
 
             lorenz_system: Default::default(),
             lorenz_state: [1.0,1.0,1.0],
@@ -219,7 +219,7 @@ impl eframe::App for MyEguiApp {
 
                 // default state
                 let mut before = self.simulation;
-                // dropdown menu
+                // dropdown menu for simulation selection
                 egui::ComboBox::from_label("Select one!")
                 .selected_text(self.simulation.to_string())
                 .show_ui(ui, |ui| {
@@ -239,6 +239,11 @@ impl eframe::App for MyEguiApp {
                 
             });
             
+            // should always have at least one line being plotted
+            // also important for 
+            if(self.points.len() == 0) {
+                self.points.push(Vec::new());
+            }
 
             if self.simulation == Simulation::Lorenz {
                 // sliders for ro, sigma, beta
@@ -256,7 +261,9 @@ impl eframe::App for MyEguiApp {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
-                    self.points.push([self.lorenz_state[0], self.lorenz_state[1]]);
+                    // points[0] is *always* user controlled trajectory
+                    
+                    self.points[0].push([self.lorenz_state[0], self.lorenz_state[1]]);
                     
                 // only allow modifcation of the inital state
                 } else if self.points.len() == 0 { 
@@ -273,7 +280,7 @@ impl eframe::App for MyEguiApp {
                 }
 
                 // plotting
-                let cur_points: PlotPoints = self.points.iter().map(|i| {
+                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
 
@@ -304,7 +311,7 @@ impl eframe::App for MyEguiApp {
                     // maybe change t, dt to state variables? not really sure.
                     crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
-                    self.points.push([self.dp_state[0], self.dp_state[1]]);
+                    self.points[0].push([self.dp_state[0], self.dp_state[1]]);
                 // manage inital state, only when on pause   
                 } else if self.points.len() == 0 { 
                     // sliders for inital state
@@ -323,7 +330,7 @@ impl eframe::App for MyEguiApp {
                 }
 
                 // plotting points
-                let cur_points: PlotPoints = self.points.iter().map(|i| {
+                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
 
@@ -351,7 +358,7 @@ impl eframe::App for MyEguiApp {
                             // maybe change t, dt to state variables? not really sure.
                             crate::integrators::rk4_step(&LogisticMap {r: r}, &mut self.lmap_state, 0.0, 0.01);
                             // discard z value or self.lorenz_state[2]
-                            self.points.push([r, self.lmap_state[0]]);
+                            self.points[0].push([r, self.lmap_state[0]]);
                         }
 
                         self.lmap_state = MyEguiApp::default().lmap_state;
@@ -363,7 +370,7 @@ impl eframe::App for MyEguiApp {
                 }
 
                 // plotting points
-                let cur_points: PlotPoints = self.points.iter().map(|i| {
+                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
                         [i[0],i[1]]
                 }).collect();
 
