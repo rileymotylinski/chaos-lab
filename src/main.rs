@@ -6,7 +6,7 @@ use egui::*;
 
 
 
-use crate::{double_pendulum::DoublePendulum, logistic_map::LogisticMap, lorenz::Lorenz};
+use crate::{double_pendulum::DoublePendulum, dynamical_system::DynamicalSystem, logistic_map::LogisticMap, lorenz::Lorenz};
 
 mod math;
 mod integrators;
@@ -122,18 +122,21 @@ impl MyEguiApp {
         MyEguiApp::default()
     }
 
+    // helper to get current system as a trait object
+    fn current_system(&self) -> &dyn DynamicalSystem {
+        match self.simulation {
+            Simulation::Lorenz => &self.lorenz_system,
+            Simulation::Dp => &self.dp_system,
+            Simulation::Lmap => &self.lmap_system,
+        }
+    }
 
-}
-
-impl eframe::App for MyEguiApp {
-
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add(egui::Slider::new(&mut self.speed, 0..=100));
+    fn ui_top_bar(&mut self, ui: &mut egui::Ui) {
+        ui.add(egui::Slider::new(&mut self.speed, 0..=100));
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+
                 // play / pause shape button
                 // where to put the widget
-                
                 ui.horizontal(|ui| {
                     // setting size of widget
                     let size = egui::vec2(36.0, 36.0);
@@ -238,63 +241,59 @@ impl eframe::App for MyEguiApp {
                 }
                 
             });
+    }
+
+    fn ui_lorenz_simulation(&mut self, ui: &mut egui::Ui) {
+        // sliders for ro, sigma, beta
+        ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+            ui.label("ro");
+            ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
+            ui.label("sigma");
+            ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
+            ui.label("beta");
+            ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
+        });
+        
+        // pushing points
+        if self.is_playing {
+            // maybe change t, dt to state variables? not really sure.
+            crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
+            // discard z value or self.lorenz_state[2]
+            // points[0] is *always* user controlled trajectory
             
-            // should always have at least one line being plotted
-            // points[0] is *always* user modfied trajectory
-            if self.points.len() == 0 {
-                self.points.push(Vec::new());
-            }
-
-            if self.simulation == Simulation::Lorenz {
-                // sliders for ro, sigma, beta
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                    ui.label("ro");
-                    ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
-                    ui.label("sigma");
-                    ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
-                    ui.label("beta");
-                    ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
-                });
-                
-                // pushing points
-                if self.is_playing {
-                    // maybe change t, dt to state variables? not really sure.
-                    crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
-                    // discard z value or self.lorenz_state[2]
-                    // points[0] is *always* user controlled trajectory
-                    
-                    self.points[0].push([self.lorenz_state[0], self.lorenz_state[1]]);
-                    
-                // only allow modifcation of the inital state
-                } else if self.points[0].len() == 0 { 
-                    // sliders for inital state
-                    ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                        ui.label("x");
-                        ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
-                        ui.label("y");
-                        ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
-                        ui.label("z");
-                        ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
-                        ui.heading("initial state");
-                    });
-                }
-
-                // plotting
-                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
-                        [i[0],i[1]]
-                }).collect();
-
-                let line = Line::new("Lorenz Attractor", cur_points);
-                Plot::new("Lorenz Attractor")
-                .view_aspect(2.0)
-                .x_axis_label("x")
-                .y_axis_label("y")
-                .show(ui, |plot_ui| plot_ui.line(line));
+            self.points[0].push([self.lorenz_state[0], self.lorenz_state[1]]);
             
-                
-                
-            } else if self.simulation == Simulation::Dp { 
-                // sliders for length1, length2, mass1, mass2
+        // only allow modifcation of the inital state
+        } else if self.points[0].len() == 0 { 
+            // sliders for inital state
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.label("x");
+                ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
+                ui.label("y");
+                ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
+                ui.label("z");
+                ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
+                ui.heading("initial state");
+            });
+        }
+
+        // plotting
+        let cur_points: PlotPoints = self.points[0].iter().map(|i| {
+                [i[0],i[1]]
+        }).collect();
+
+        let line = Line::new("Lorenz Attractor", cur_points);
+        Plot::new("Lorenz Attractor")
+        .view_aspect(2.0)
+        .x_axis_label("x")
+        .y_axis_label("y")
+        .show(ui, |plot_ui| plot_ui.line(line));
+    
+        
+    }
+
+    fn ui_dp_simulation(&mut self, ui: &mut egui::Ui) {
+        // sliders for length1, length2, mass1, mass2
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                     ui.label("l1");
                     ui.add(egui::Slider::new(&mut self.dp_system.l1, 0.0..=100.0));
@@ -342,47 +341,71 @@ impl eframe::App for MyEguiApp {
                 .show(ui, |plot_ui| plot_ui.line(line));
             
                 
-                
-            } else {
-                //if ui.add(egui::Slider::new(&mut self.lmap_system.r,0.3..=0.4)).changed() {
-                    //self.lmap_state = MyEguiApp::default().lmap_state;
-                //};
-                
-                // running simulation
-                if self.is_playing {
+    }
 
-                    for s in 2500..4000 {
-                        let r = s as f64 / 100.0;
+    fn ui_lmap_simulation(&mut self, ui: &mut egui::Ui) {
+        //if ui.add(egui::Slider::new(&mut self.lmap_system.r,0.3..=0.4)).changed() {
+        //self.lmap_state = MyEguiApp::default().lmap_state;
+        //};
+        
+        // running simulation
+        if self.is_playing {
 
-                        for _ in 0..50 {
-                            // maybe change t, dt to state variables? not really sure.
-                            crate::integrators::rk4_step(&LogisticMap {r: r}, &mut self.lmap_state, 0.0, 0.01);
-                            // discard z value or self.lorenz_state[2]
-                            self.points[0].push([r, self.lmap_state[0]]);
-                        }
+            for s in 2500..4000 {
+                let r = s as f64 / 100.0;
 
-                        self.lmap_state = MyEguiApp::default().lmap_state;
-                    }
-                    
-                   
-                    
-                    self.is_playing = !self.is_playing;
+                for _ in 0..50 {
+                    // maybe change t, dt to state variables? not really sure.
+                    crate::integrators::rk4_step(&LogisticMap {r: r}, &mut self.lmap_state, 0.0, 0.01);
+                    // discard z value or self.lorenz_state[2]
+                    self.points[0].push([r, self.lmap_state[0]]);
                 }
 
-                // plotting points
-                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
-                        [i[0],i[1]]
-                }).collect();
+                self.lmap_state = MyEguiApp::default().lmap_state;
+            }
+            
+            
+            
+            self.is_playing = !self.is_playing;
+        }
 
-                let pts = Points::new("pts", cur_points).radius(0.9).color(egui::Color32::LIGHT_BLUE);
-                
-                Plot::new("my_plot")
-                .view_aspect(2.0)
-                .x_axis_label("r")
-                .y_axis_label("x_n")
-                .show(ui, |plot_ui| {
-                    plot_ui.points(pts);
-                });
+        // plotting points
+        let cur_points: PlotPoints = self.points[0].iter().map(|i| {
+                [i[0],i[1]]
+        }).collect();
+
+        let pts = Points::new("pts", cur_points).radius(0.9).color(egui::Color32::LIGHT_BLUE);
+        
+        Plot::new("my_plot")
+        .view_aspect(2.0)
+        .x_axis_label("r")
+        .y_axis_label("x_n")
+        .show(ui, |plot_ui| {
+            plot_ui.points(pts);
+        });
+    }
+}
+
+impl eframe::App for MyEguiApp {
+
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            
+            self.ui_top_bar(ui);
+            // should always have at least one line being plotted
+            // points[0] is *always* user modfied trajectory
+            if self.points.len() == 0 {
+                self.points.push(Vec::new());
+            }
+
+            let sys = self.current_system();
+
+            if self.simulation == Simulation::Lorenz {
+                self.ui_lorenz_simulation(ui);
+            } else if self.simulation == Simulation::Dp { 
+                self.ui_dp_simulation(ui);
+            } else {
+                self.ui_lmap_simulation(ui);
             }
         });
         // update every 32ms, regardless of user input
