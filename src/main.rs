@@ -243,8 +243,11 @@ impl eframe::App for MyEguiApp {
             if self.simulation == Simulation::Lorenz {
                 // sliders for ro, sigma, beta
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.label("ro");
                     ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
+                    ui.label("sigma");
                     ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
+                    ui.label("beta");
                     ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
                 });
                 
@@ -259,9 +262,11 @@ impl eframe::App for MyEguiApp {
                 } else if self.points.len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
-                        
+                        ui.label("x");
                         ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
+                        ui.label("y");
                         ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
+                        ui.label("z");
                         ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
                         ui.heading("initial state");
                     });
@@ -284,9 +289,13 @@ impl eframe::App for MyEguiApp {
             } else if self.simulation == Simulation::Dp { 
                 // sliders for length1, length2, mass1, mass2
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                    ui.label("l1");
                     ui.add(egui::Slider::new(&mut self.dp_system.l1, 0.0..=100.0));
+                    ui.label("l2");
                     ui.add(egui::Slider::new(&mut self.dp_system.l2, 0.0..=100.0));
+                    ui.label("m1");
                     ui.add(egui::Slider::new(&mut self.dp_system.m1, 0.0..=100.0));
+                    ui.label("m2");
                     ui.add(egui::Slider::new(&mut self.dp_system.m2, 0.0..=100.0));
                 });
                 
@@ -296,14 +305,18 @@ impl eframe::App for MyEguiApp {
                     crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
                     // discard z value or self.lorenz_state[2]
                     self.points.push([self.dp_state[0], self.dp_state[1]]);
-                // manage inital state    
+                // manage inital state, only when on pause   
                 } else if self.points.len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                         
+                        ui.label("theta1");
                         ui.add(egui::Slider::new(&mut self.dp_state[0], 0.0..=100.0));
+                        ui.label("theta2");
                         ui.add(egui::Slider::new(&mut self.dp_state[1], 0.0..=100.0));
+                        ui.label("omega1");
                         ui.add(egui::Slider::new(&mut self.dp_state[2], 0.0..=100.0));
+                        ui.label("omega2");
                         ui.add(egui::Slider::new(&mut self.dp_state[3], 0.0..=100.0));
                         ui.heading("initial state");
                     });
