@@ -240,8 +240,8 @@ impl eframe::App for MyEguiApp {
             });
             
             // should always have at least one line being plotted
-            // also important for 
-            if(self.points.len() == 0) {
+            // points[0] is *always* user modfied trajectory
+            if self.points.len() == 0 {
                 self.points.push(Vec::new());
             }
 
@@ -266,7 +266,7 @@ impl eframe::App for MyEguiApp {
                     self.points[0].push([self.lorenz_state[0], self.lorenz_state[1]]);
                     
                 // only allow modifcation of the inital state
-                } else if self.points.len() == 0 { 
+                } else if self.points[0].len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                         ui.label("x");
@@ -313,7 +313,7 @@ impl eframe::App for MyEguiApp {
                     // discard z value or self.lorenz_state[2]
                     self.points[0].push([self.dp_state[0], self.dp_state[1]]);
                 // manage inital state, only when on pause   
-                } else if self.points.len() == 0 { 
+                } else if self.points[0].len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                         
