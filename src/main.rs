@@ -190,8 +190,12 @@ impl eframe::App for MyEguiApp {
                         self.points = MyEguiApp::default().points;
                         self.lorenz_state = MyEguiApp::default().lorenz_state;
                         
-
                         self.dp_state = MyEguiApp::default().dp_state;
+
+                        // pause on reset, annoying to have it continue to play?
+                        if self.is_playing {
+                            self.is_playing = false;
+                        }
                        
                     }
 
