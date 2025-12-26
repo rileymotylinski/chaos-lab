@@ -77,7 +77,7 @@ struct MyEguiApp {
 
     // lorenz
     pub lorenz_system: Lorenz,
-    pub lorenz_state: [f64; 3],
+    pub lorenz_states: Vec<[f64; 3]>,
 
     // double pendulum
     pub dp_system: DoublePendulum,
@@ -99,7 +99,7 @@ impl Default for MyEguiApp {
             points: vec![vec![]],
 
             lorenz_system: Default::default(),
-            lorenz_state: [1.0,1.0,1.0],
+            lorenz_states: vec![[1.0,1.0,1.0]],
 
             dp_system: Default::default(),
             dp_state: [1.0,1.0,1.0,1.0],
@@ -182,7 +182,7 @@ impl MyEguiApp {
                     // TODO : make this more generic/applicable to all simulations
                     if response.clicked() {
                         self.points = MyEguiApp::default().points;
-                        self.lorenz_state = MyEguiApp::default().lorenz_state;
+                        self.lorenz_states = MyEguiApp::default().lorenz_states;
                         
                         self.dp_state = MyEguiApp::default().dp_state;
 
@@ -225,7 +225,7 @@ impl MyEguiApp {
                 if self.simulation != before {
                     // reset graph(s)
                     self.points = MyEguiApp::default().points;
-                    self.lorenz_state = MyEguiApp::default().lorenz_state;
+                    self.lorenz_states = MyEguiApp::default().lorenz_states;
                     self.dp_state = MyEguiApp::default().dp_state;
                     // stop simulation when switching
                     self.is_playing = false;
@@ -247,38 +247,61 @@ impl MyEguiApp {
         
         // pushing points
         if self.is_playing {
-            // maybe change t, dt to state variables? not really sure.
-            crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_state, 0.0, 0.01);
+            
             // discard z value or self.lorenz_state[2]
             // points[0] is *always* user controlled trajectory
             
-            self.points[0].push([self.lorenz_state[0], self.lorenz_state[1]]);
+            for i in 0..self.lorenz_states.len() {
+                // maybe change t, dt to state variables? not really sure.
+                crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_states[i], 0.0, 0.01);
+                self.points[i].push([self.lorenz_states[i][0], self.lorenz_states[i][1]]);
+            }
             
-        // only allow modifcation of the inital state
+            
+        // only allow modifcation of the inital state, when paused and no line drawn on screen
         } else if self.points[0].len() == 0 { 
             // sliders for inital state
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                 ui.label("x");
-                ui.add(egui::Slider::new(&mut self.lorenz_state[0], 0.0..=100.0));
+                ui.add(egui::Slider::new(&mut self.lorenz_states[0][0], 0.0..=100.0));
                 ui.label("y");
-                ui.add(egui::Slider::new(&mut self.lorenz_state[1], 0.0..=100.0));
+                ui.add(egui::Slider::new(&mut self.lorenz_states[0][1], 0.0..=100.0));
                 ui.label("z");
-                ui.add(egui::Slider::new(&mut self.lorenz_state[2], 0.0..=100.0));
+                ui.add(egui::Slider::new(&mut self.lorenz_states[0][2], 0.0..=100.0));
                 ui.heading("initial state");
             });
+
+            
         }
 
-        // plotting
-        let cur_points: PlotPoints = self.points[0].iter().map(|i| {
-                [i[0],i[1]]
-        }).collect();
+        if ui.button("Add Trajectory").clicked() {
+            // adding another state to step
+            self.lorenz_states.push([1.5,1.5,1.5]);
+            // adding another points vector
+            self.points.push(vec![]);
+        }
 
-        let line = Line::new("Lorenz Attractor", cur_points);
+        let mut lines = vec![];
+        for i in 0..self.points.len() {
+            // plotting
+            let cur_points: PlotPoints = self.points[i].iter().map(|i| {
+                    [i[0],i[1]]
+            }).collect();
+
+            let name = format!("Lorenz Attractor {}", i);
+            let line = Line::new(name, cur_points);
+            lines.push(line);
+        }
+        
         Plot::new("Lorenz Attractor")
         .view_aspect(2.0)
         .x_axis_label("x")
         .y_axis_label("y")
-        .show(ui, |plot_ui| plot_ui.line(line));
+        .show(ui, |plot_ui| {
+            for line in lines {
+                plot_ui.line(line);
+            }
+        });
     
         
     }
@@ -388,8 +411,6 @@ impl eframe::App for MyEguiApp {
             if self.points.len() == 0 {
                 self.points.push(Vec::new());
             }
-
-        
 
             if self.simulation == Simulation::Lorenz {
                 self.ui_lorenz_simulation(ui);
