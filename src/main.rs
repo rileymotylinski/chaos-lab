@@ -122,15 +122,6 @@ impl MyEguiApp {
         MyEguiApp::default()
     }
 
-    // helper to get current system as a trait object
-    fn current_system(&self) -> &dyn DynamicalSystem {
-        match self.simulation {
-            Simulation::Lorenz => &self.lorenz_system,
-            Simulation::Dp => &self.dp_system,
-            Simulation::Lmap => &self.lmap_system,
-        }
-    }
-
     fn ui_top_bar(&mut self, ui: &mut egui::Ui) {
         ui.add(egui::Slider::new(&mut self.speed, 0..=100));
             ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
@@ -398,7 +389,7 @@ impl eframe::App for MyEguiApp {
                 self.points.push(Vec::new());
             }
 
-            let sys = self.current_system();
+        
 
             if self.simulation == Simulation::Lorenz {
                 self.ui_lorenz_simulation(ui);
