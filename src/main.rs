@@ -3,10 +3,11 @@
 
 use egui_plot::{Line, Plot, PlotPoints, Points};
 use egui::*;
+use rand::Rng;
 
 
 
-use crate::{double_pendulum::DoublePendulum, dynamical_system::DynamicalSystem, logistic_map::LogisticMap, lorenz::Lorenz};
+use crate::{double_pendulum::DoublePendulum, logistic_map::LogisticMap, lorenz::Lorenz};
 
 mod math;
 mod integrators;
@@ -17,8 +18,6 @@ mod lorenz;
 mod double_pendulum;
 mod lyapunov;
 mod dynamical_system;
-
-
 
 use eframe::egui;
 
@@ -62,9 +61,6 @@ impl ToString for Simulation {
         }
     }
 }
-
-
-
 
 struct MyEguiApp {
     
@@ -275,8 +271,13 @@ impl MyEguiApp {
         }
 
         if ui.button("Add Trajectory").clicked() {
+            let mut rng = rand::rng();
             // adding another state to step
-            self.lorenz_states.push([1.5,1.5,1.5]);
+            self.lorenz_states.push([
+                self.lorenz_states[0][0] + rng.random_range(0.0..10.0),
+                self.lorenz_states[0][1] + rng.random_range(0.0..10.00),
+                self.lorenz_states[0][2] + rng.random_range(0.0..10.0)
+            ]);
             // adding another points vector
             self.points.push(vec![]);
         }
