@@ -1,4 +1,6 @@
-use crate::dynamical_system::DynamicalSystem;
+use rand::Rng;
+
+use crate::dynamical_system::{DynamicalSystem, Noise};
 
 // parameters for Lorenz system
 pub struct Lorenz {
@@ -19,6 +21,17 @@ impl DynamicalSystem for Lorenz {
             (state[0]*(self.ro-state[2]))-state[1],
             (state[0]*state[1]) - (self.beta*state[2])
         ]
+    }
+}
+
+impl Noise for Lorenz {
+    fn new_noisy(&self, noise_level: f64) -> Self {
+        let mut rng = rand::rng();
+        Lorenz { 
+              sigma: self.sigma + rng.random_range(0.0..noise_level),
+              ro: self.ro + rng.random_range(0.0..noise_level),
+              beta: self.beta + rng.random_range(0.0..noise_level)
+            }
     }
 }
 
