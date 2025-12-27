@@ -72,12 +72,12 @@ struct MyEguiApp {
     // TODO: refactor, definitely a way to compress the points into a single vector
 
     // lorenz
-    pub lorenz_systems: Vec<Lorenz>,
+    pub lorenz_system: Lorenz,
     pub lorenz_states: Vec<[f64; 3]>,
 
     // double pendulum
     pub dp_system: DoublePendulum,
-    pub dp_state: [f64; 4],
+    pub dp_states: Vec<[f64; 4]>,
 
     pub lmap_system: LogisticMap,
     pub lmap_state: [f64; 1]
@@ -94,12 +94,12 @@ impl Default for MyEguiApp {
 
             points: vec![vec![]],
 
-            lorenz_systems: vec![Lorenz::default()],
+            lorenz_system: Lorenz::default(),
             // default x,y,z
             lorenz_states: vec![[1.0,1.0,1.0]],
 
             dp_system: Default::default(),
-            dp_state: [1.0,1.0,1.0,1.0],
+            dp_states: vec![[1.0,1.0,1.0,1.0]],
 
             lmap_system: Default::default(),
             lmap_state: [0.7]
@@ -181,7 +181,7 @@ impl MyEguiApp {
                         self.points = MyEguiApp::default().points;
                         self.lorenz_states = MyEguiApp::default().lorenz_states;
                         
-                        self.dp_state = MyEguiApp::default().dp_state;
+                        self.dp_states = MyEguiApp::default().dp_states;
 
                         // pause on reset, annoying to have it continue to play?
                         if self.is_playing {
@@ -223,7 +223,7 @@ impl MyEguiApp {
                     // reset graph(s)
                     self.points = MyEguiApp::default().points;
                     self.lorenz_states = MyEguiApp::default().lorenz_states;
-                    self.dp_state = MyEguiApp::default().dp_state;
+                    self.dp_states = MyEguiApp::default().dp_states;
                     // stop simulation when switching
                     self.is_playing = false;
                 }
@@ -235,11 +235,11 @@ impl MyEguiApp {
         // sliders for ro, sigma, beta
         ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
             ui.label("ro");
-            ui.add(egui::Slider::new(&mut self.lorenz_systems[0].ro, 0.0..=100.0));
+            ui.add(egui::Slider::new(&mut self.lorenz_system.ro, 0.0..=100.0));
             ui.label("sigma");
-            ui.add(egui::Slider::new(&mut self.lorenz_systems[0].sigma, 0.0..=100.0));
+            ui.add(egui::Slider::new(&mut self.lorenz_system.sigma, 0.0..=100.0));
             ui.label("beta");
-            ui.add(egui::Slider::new(&mut self.lorenz_systems[0].beta, 0.0..=100.0));
+            ui.add(egui::Slider::new(&mut self.lorenz_system.beta, 0.0..=100.0));
         });
         
         // pushing points
@@ -250,7 +250,7 @@ impl MyEguiApp {
             
             for i in 0..self.lorenz_states.len() {
                 // maybe change t, dt to state variables? not really sure.
-                crate::integrators::rk4_step(&self.lorenz_systems[0], &mut self.lorenz_states[i], 0.0, 0.01);
+                crate::integrators::rk4_step(&self.lorenz_system, &mut self.lorenz_states[i], 0.0, 0.01);
                 self.points[i].push([self.lorenz_states[i][0], self.lorenz_states[i][1]]);
             }
             
@@ -275,13 +275,11 @@ impl MyEguiApp {
             let mut rng = rand::rng();
             // randomized default state
             self.lorenz_states.push([
-                self.lorenz_states[0][0] + rng.random_range(0.0..10.0),
-                self.lorenz_states[0][1] + rng.random_range(0.0..10.00),
-                self.lorenz_states[0][2] + rng.random_range(0.0..10.0)
+                self.lorenz_states[0][0] + rng.random_range(0.0..5.0),
+                self.lorenz_states[0][1] + rng.random_range(0.0..5.00),
+                self.lorenz_states[0][2] + rng.random_range(0.0..5.0)
             ]);
 
-            // randomized system based roughly based on current system
-            self.lorenz_systems.push(self.lorenz_systems[0].new_noisy(10.0));
             // adding another points vector so we have something push the new points to
             self.points.push(vec![]);
         }
@@ -323,41 +321,74 @@ impl MyEguiApp {
                     ui.label("m2");
                     ui.add(egui::Slider::new(&mut self.dp_system.m2, 0.0..=100.0));
                 });
+
+                
                 
                 // pushing points
                 if self.is_playing {
-                    // maybe change t, dt to state variables? not really sure.
-                    crate::integrators::rk4_step(&self.dp_system, &mut self.dp_state, 0.0, 0.01);
-                    // discard z value or self.lorenz_state[2]
-                    self.points[0].push([self.dp_state[0], self.dp_state[1]]);
+
+                    for i in 0..self.dp_states.len() {
+                        // maybe change t, dt to state variables? not really sure.
+                        crate::integrators::rk4_step(&self.dp_system, &mut self.dp_states[i], 0.0, 0.01);
+                        // updating points at i
+                        self.points[i].push([self.dp_states[i][0], self.dp_states[i][1]]);
+                    }
+                    
                 // manage inital state, only when on pause   
                 } else if self.points[0].len() == 0 { 
                     // sliders for inital state
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
                         
                         ui.label("theta1");
-                        ui.add(egui::Slider::new(&mut self.dp_state[0], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_states[0][0], 0.0..=100.0));
                         ui.label("theta2");
-                        ui.add(egui::Slider::new(&mut self.dp_state[1], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_states[0][1], 0.0..=100.0));
                         ui.label("omega1");
-                        ui.add(egui::Slider::new(&mut self.dp_state[2], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_states[0][2], 0.0..=100.0));
                         ui.label("omega2");
-                        ui.add(egui::Slider::new(&mut self.dp_state[3], 0.0..=100.0));
+                        ui.add(egui::Slider::new(&mut self.dp_states[0][3], 0.0..=100.0));
                         ui.heading("initial state");
                     });
                 }
 
-                // plotting points
-                let cur_points: PlotPoints = self.points[0].iter().map(|i| {
-                        [i[0],i[1]]
-                }).collect();
 
-                let line = Line::new("Double Pendulum", cur_points);
+                if ui.button("Add Trajectory").clicked() {
+                    let mut rng = rand::rng();
+                    // randomized default state
+                    self.dp_states.push([
+                        self.dp_states[0][0] + rng.random_range(0.0..5.0),
+                        self.dp_states[0][1] + rng.random_range(0.0..5.0),
+                        self.dp_states[0][2] + rng.random_range(0.0..5.0),
+                        self.dp_states[0][3] + rng.random_range(0.0..5.0)
+                    ]);
+
+                    // adding another points vector so we have something push the new points to
+                    self.points.push(vec![]);
+                }
+
+
+                // plotting points
+                let mut lines = vec![];
+
+                for i in 0..self.points.len() {
+                    let cur_points: PlotPoints = self.points[i].iter().map(|i| {
+                        [i[0],i[1]]
+                    }).collect();
+                    let line = Line::new("Double Pendulum", cur_points);
+                    lines.push(line);
+                }
+                
+
+                
                 Plot::new("Double Pendulum")
                 .view_aspect(2.0)
                 .x_axis_label("Theta 1")
                 .y_axis_label("Theta 2")
-                .show(ui, |plot_ui| plot_ui.line(line));
+                .show(ui, |plot_ui| {
+                    for line in lines {
+                        plot_ui.line(line);
+                    }
+                });
             
                 
     }
